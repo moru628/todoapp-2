@@ -3,29 +3,33 @@ import Navbar from '../../nav/Navbar'
 import './index.css'
 import PostDialog from '../../component/PostDialog/PostDialog'
 import axios from 'axios'
+import { useDispatch,useSelector } from 'react-redux'
+import { fetchPostsData , addNewPost} from '../../store/modules/postStore'
 const Moment = () => {
   const [open, setOpen] = useState(false)
-  const [posts, setPosts] = useState([])
   const [followedFriends, setFollowedFriends] = useState([])
 
   const url = process.env.REACT_APP_BACKEND_URL;
 
+  const dispatch = useDispatch()
+  const {posts} = useSelector(state => state.post)
   useEffect(()=>{
-    const fetchPosts = async() => {
-      try{
-        const response = await axios.get(`${url}/post`)
+    dispatch(fetchPostsData())
+  },[dispatch])
 
-        const updatedPosts = response.data.map(post => ({
-          ...post,
-          profileImg: post.profileImg ? `${url}/upload/${post.profileImg}` : '/assets/profile-blank.png'
-        }));
-        setPosts(updatedPosts)
-      }catch(error){
-        console.error('Error fetching posts:', error);
-      }
-    }
-    fetchPosts()
-  }, [url])
+  const handlePostUpload = (newPost) => {
+    const updatedPost = {
+      ...newPost,
+      profileImg: newPost.profileImg ? `${url}/upload/${newPost.profileImg}` : '/assets/profile-blank.png',
+    };
+  
+    dispatch(addNewPost(updatedPost));
+    handleClose(); 
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
 
 useEffect(() => {
   const fetchFollowedFriends = async () => {
@@ -42,26 +46,9 @@ useEffect(() => {
   fetchFollowedFriends();
 }, [url]);
   
-useEffect(() => {
-
-})
   const handleClickOpen = () => {
     setOpen(true);
   };
-
-  const handleClose = () => {
-    setOpen(false);
-  };
-
-  const handlePostUpload = (newPost) => {
-    const updatedPost = {
-      ...newPost,
-      profileImg: newPost.profileImg ? `${url}/upload/${newPost.profileImg}` : '/assets/profile-blank.png',
-    };
-  
-    setPosts((prevPosts) => [updatedPost, ...prevPosts]);
-  };
-  
 
   const handleFollow = async (friendId) => {
     const userId = localStorage.getItem('userId');
@@ -159,7 +146,11 @@ useEffect(() => {
         <div className='add-icon' onClick={handleClickOpen}>
           <img src='/assets/Add.png' alt='' className='add-icon'/>
         </div>
-        <PostDialog open={open} handleClose={handleClose} onPostUpload={handlePostUpload} />
+        <PostDialog 
+          open={open}
+          handleClose={handleClose}
+          onPostUpload={handlePostUpload} 
+        />
       </div>
       <Navbar />
     </div>

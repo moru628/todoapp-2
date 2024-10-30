@@ -1,20 +1,22 @@
-import React, {useEffect, useState, useCallback}from 'react'
+import React, {useEffect}from 'react'
 import Navbar from '../../nav/Navbar';
 import './index.css'
 import { AiFillHeart } from "react-icons/ai";
 import Category from '../../component/Category/Category';
 import Activity from '../../component/Activities/Activities'
-import axios from 'axios';
+import { useDispatch, useSelector } from 'react-redux';
+import { selectThreeRandomPosts} from '../../store/modules/postStore';
+import { fetchTaskCounts } from '../../store/modules/taskStore';
+import { fetchUserData,selectUserName,selectProfileImg } from '../../store/modules/userStore';
 
 const Home = () => {
-  const [userName, setUserName] = useState(localStorage.getItem("userName") || "Guest");
-  const [profileImg, setProfileImg] = useState(localStorage.getItem("profileImg") || '/assets/profile-black.png');
-  const [posts, setPosts] = useState([])
-  const [taskCounts, setTaskCounts] = useState({});
-
+  const dispatch = useDispatch()
   const userId = localStorage.getItem("userId");
-
   const url = process.env.REACT_APP_BACKEND_URL;
+  const {selectedPosts} = useSelector(state => state.post)
+  const {taskCounts} = useSelector(state => state.task)
+  const userName = useSelector(selectUserName);
+  const profileImg = useSelector(selectProfileImg);
 
   const categories = [
     { id: 1, name: 'Work', tasks: taskCounts['Work'] || 0 },
@@ -25,72 +27,16 @@ const Home = () => {
   ];
 
   useEffect(() => {
-   const fetchUserData = async () => {
-     if (!userId) return; 
-     try {
-       const response = await axios.get(`${url}/user/${userId}`);
-       const userData = response.data;
- 
-       setUserName(userData.name);
-       localStorage.setItem('userName', userData.name)
-
-       if (userData.profileImg && userData.profileImg !== '') {
-        setProfileImg(`${url}/upload/${userData.profileImg}`);
-      } else {
-        setProfileImg('/assets/profile-blank.png');
-      }
-
-      localStorage.setItem('profileImg', userData.profileImg || '/assets/profile-blank.png');
-     } catch (error) {
-       console.error("Error fetching user data:", error);
-     }
-   };
- 
-   fetchUserData();
- }, [userId, url]);
+      dispatch(fetchUserData());
+  }, [dispatch]);
   
- useEffect(() => {
-  const fetchPosts = async () => {
-    try {
-      const response = await axios.get(`${url}/post`);
-      const posts = response.data;
+  useEffect(() => {
+    dispatch(selectThreeRandomPosts());
+  }, [dispatch]);
 
-      const selectedPosts = posts
-        .sort(() => 0.5 - Math.random())
-        .slice(0, 3);
-
-      setPosts(selectedPosts);
-    } catch (error) {
-      console.error('Error fetching posts:', error);
-    }
-  };
-
-  fetchPosts();
-}, [url]);
-
-const fetchTaskCounts = useCallback(async () => {
-  if (!userId) return;
-  try {
-    const response = await axios.get(`${url}/task/count?userId=${userId}`);
-    const counts = response.data.count;
-    setTaskCounts(counts);
-  } catch (error) {
-    console.error('Error fetching task counts:', error);
-  }
-}, [userId, url]);
-
-useEffect(() => {
-  fetchTaskCounts();
-}, [fetchTaskCounts]);
-
-const handleNewTask = async (taskData) => {
-  try {
-    await axios.post(`${url}/task`, taskData);
-    fetchTaskCounts();
-  } catch (error) {
-    console.error('Error adding task:', error);
-  }
-};
+  useEffect(()=>{
+    dispatch(fetchTaskCounts())
+  }, [dispatch])
 
   return (
     <div>
@@ -112,14 +58,14 @@ const handleNewTask = async (taskData) => {
                     <img src='/assets/search.png' alt='' className="search-icon" />
                 </div>
             </div>
-            <Category categories={categories} userId={userId}  onNewTask={handleNewTask} />
+            <Category categories={categories} userId={userId} />
             <Activity />
             <div className='container-scroll'>
               <div className='subtitle'>
                 Moment
               </div>
               <div className='momemnt-contain'>
-                {posts.map((post) => (
+                {selectedPosts.map((post) => (
                 <div key={post._id} className= 'moment-item'
                   style={{
                   backgroundImage: `url(${url}/upload/${post.imageUrl})`,

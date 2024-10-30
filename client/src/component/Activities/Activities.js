@@ -1,23 +1,17 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect} from 'react'
 import './activities.css'
-import axios from 'axios'
 import { Link } from 'react-router-dom';
+import {useDispatch, useSelector} from 'react-redux'
+import { fetchEventData } from '../../store/modules/activityStore';
 
 const Activity = () => {
-const [activities, setActivities] = useState([])
-const url = process.env.REACT_APP_BACKEND_URL;
+const {activities} = useSelector(state => state.activity)
+const dispatch = useDispatch()
 
-    useEffect(()=>{
-        const fetchEventData = async(req, res) => {
-            try{
-                const response = await axios.get(`${url}/event`)
-                setActivities(response.data)
-            }catch(error){
-                console.error("Error fetching activities:", error);
-            }
-        }
-        fetchEventData()
-    }, [url])
+useEffect(()=>{
+    dispatch(fetchEventData())
+}, [dispatch])
+    
   return (
         <div className='container-scroll'>
         <div className='subtitle'>Events</div>

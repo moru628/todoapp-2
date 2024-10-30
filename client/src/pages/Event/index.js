@@ -1,72 +1,26 @@
-import React, { useState,useEffect } from 'react'
+import React, { useEffect } from 'react'
 import Navbar from '../../nav/Navbar'
 import { Link } from 'react-router-dom'; 
 import './index.css'
-import axios from 'axios'
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchEventData } from '../../store/modules/activityStore';
+import { toggleHeartEvent } from '../../store/modules/eventStore'
 
 const Event = () => {
-  const [activities, setActivities] = useState([])
-  const [heartIcon, setHeartIcon] = useState({})
+  const dispatch = useDispatch();
 
-  const url = process.env.REACT_APP_BACKEND_URL;
+  const activities = useSelector(state => state.activity.activities); 
+  const heartIconStates = useSelector(state => state.event.heartIconStates || {});
 
-  useEffect(() => {
-    const savedHearts = JSON.parse(localStorage.getItem('heartIconStates')) || {};
-    setHeartIcon(savedHearts);
-  }, []);
+  useEffect(()=>{
+    dispatch(fetchEventData())
+  },[dispatch])
 
-  const handleClickHeart = async (activity) => {
-    const newHeartIconState = !heartIcon[activity.id];
-    
-    setHeartIcon((prevState) => {
-      const newState = {
-        ...prevState,
-        [activity.id]: newHeartIconState
-      };
+  const handleClickHeart = (activity) => {
+    const newLikedState = !heartIconStates[activity.id];
+    dispatch(toggleHeartEvent({ ...activity, isLiked: newLikedState }));
+};
 
-      localStorage.setItem('heartIconStates', JSON.stringify(newState));
-      return newState;
-    });
-
-    const eventImageUrl = `/assets/activity${activity.id}.png`;
-    const userId = localStorage.getItem('userId');
-    if (!userId) {
-      alert("You must be logged in to add event.");
-      return;
-    }
-    if (newHeartIconState) {
-      try {
-        const response = await axios.post(`${url}/user/event`, {
-          userId, 
-          eventImageUrl
-        });
-        console.log("event added:",response.data); 
-      } catch (error) {
-        console.error("Error adding event:", error.response ? error.response.data : error.message);
-      }
-    } else {
-      try {
-        const response = await axios.delete(`${url}/user/event`, {
-          data: { userId, eventImageUrl }
-        });
-        console.log("event removed:", response.data);
-      } catch (error) {
-        console.error("Error removing event:", error.response ? error.response.data : error.message);
-      }
-    }
-  }
-
-  useEffect(() => {
-    const fetchActivities = async() => {
-      try {
-        const response = await axios.get(`${url}/event`)
-        setActivities(response.data)
-      } catch(error){
-        console.error("Error fetching activities:", error);
-      }
-    }
-    fetchActivities()
-  },[url])
 
   return (
     <div className='event-container'>
@@ -103,11 +57,11 @@ const Event = () => {
                 <div className='button-text'>Joining</div>
               </Link>
               <div className='heart-button' onClick={() => handleClickHeart(activity)}>
-                {heartIcon[activity.id] ? 
-                  <img src='/assets/heart-2.png' alt='' className='heart-icon'/>
-                :
-                  <img src='/assets/heart-1.png' alt='' className='heart-icon'/>
-                }
+              <img 
+                src={heartIconStates[activity.id] ? '/assets/heart-2.png' : '/assets/heart-1.png'} 
+                alt={heartIconStates[activity.id] ? 'Liked' : 'Not Liked'} 
+                className='heart-icon'
+              />
               </div>
             </div>
           </div>

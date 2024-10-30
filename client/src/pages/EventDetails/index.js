@@ -1,36 +1,29 @@
-import React,  { useEffect, useState } from 'react'
+import React,  { useEffect} from 'react'
 import './index.css'
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import Navbar from '../../nav/Navbar';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchEventDetails } from '../../store/modules/eventStore';
 
 const EventDetails = () => {
   const { eventId } = useParams();
-  const [event, setEvent] = useState(null);
-
   const navigate = useNavigate();
+  const dispatch = useDispatch()
+  const {events} = useSelector(state => state.event)
 
-  const url = process.env.REACT_APP_BACKEND_URL;
+  useEffect(() => {
+    if (eventId) { 
+      dispatch(fetchEventDetails(eventId));
+    }
+  }, [dispatch, eventId]);
 
   const handleBackClick = () => {
-        navigate('/event');
+    navigate('/event');
   };
 
   const handleConfirmClick = () => {
     navigate(`/booking/${eventId}`);
   };
-
-  useEffect(() => {
-    const fetchEventDetails = async () => {
-      try {
-        const response = await axios.get(`${url}/event/${eventId}`);
-        setEvent(response.data);
-      } catch (error) {
-        console.error("Error fetching event details:", error);
-      }
-    };
-    fetchEventDetails();
-  }, [eventId, url]);
 
   return (
     <div className='event-details-container'>
@@ -40,34 +33,34 @@ const EventDetails = () => {
         </div>
         <div className='title'>Event Details</div>
       </div>
-      {event ? (
+      {events ? (
           <div className='details-content'>
             <div className='event-details-img'>
-              <img src= {`/assets/activity${event.id}.png`}alt='' className='each-event-image'/>
+              <img src= {`/assets/activity${events.id}.png`}alt='' className='each-event-image'/>
             </div>
             <div className='box'>
               <div className='text'>Event Name :</div>
-              <input value={event.title} readOnly />
+              <input value={events.title} readOnly />
             </div>
             <div className='box'>
               <div className='text'>Category Event :</div>
-              <input value={event.category} readOnly /> 
+              <input value={events.category} readOnly /> 
             </div>
             <div className='box'>
               <div className='text'>Location :</div>
-              <input value={event.location} readOnly />
+              <input value={events.location} readOnly />
             </div>
             <div className='box'>
               <div className='text'>Date :</div>
-              <input value={event.time} readOnly />
+              <input value={events.time} readOnly />
             </div>
           </div>
         ) : (
           <div>Loading...</div>
         )}
       <div className='confirm-btn'>
-        {event?(
-          <button className={`confirm-different-${event.id}`} onClick={handleConfirmClick}>Confirm</button>
+        {events?(
+          <button className={`confirm-different-${events.id}`} onClick={handleConfirmClick}>Confirm</button>
         ):(
           <div></div>
         )}

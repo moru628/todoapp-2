@@ -7,10 +7,10 @@ const PostDialog = ({open, handleClose, onPostUpload}) => {
     const fileInputRef = useRef(null)
     const [selectedImage, setSelectedImage] = useState(null)
     const [title, setTitle] = useState('');
+    const [loading, setLoading] = useState(false);
 
     const url = process.env.REACT_APP_BACKEND_URL;
 
-    // Trigger the file input click using useRef
     const handleUploadClick = () => {
         fileInputRef.current.click()
     }
@@ -41,6 +41,8 @@ const PostDialog = ({open, handleClose, onPostUpload}) => {
       formData.append('postImage', fileInputRef.current.files[0]);
       formData.append('userId', userId);
 
+      setLoading(true); 
+
       console.log('Form Data:', formData);
 
       try{
@@ -51,23 +53,25 @@ const PostDialog = ({open, handleClose, onPostUpload}) => {
         setSelectedImage(null);
       }catch(error){
         console.error('Error uploading post:', error);
+      } finally {
+        setLoading(false);
       }
     }
+
   return (
     <Dialog
-    open={open}
-    onClose={handleClose}
-    fullWidth={true}
-    maxWidth="md"
-    PaperProps={{
-      style: {
-        minHeight: '400px',
-        maxHeight: '700px',
-        width: '600px',
-      },
-    }}
-  
-  >
+      open={open}
+      onClose={handleClose}
+      fullWidth={true}
+      maxWidth="md"
+      PaperProps={{
+        style: {
+          minHeight: '400px',
+          maxHeight: '700px',
+          width: '600px',
+        },
+      }}
+   >
     <DialogContent>
       <form>
         {/* Image Upload */}
@@ -100,8 +104,8 @@ const PostDialog = ({open, handleClose, onPostUpload}) => {
     </DialogContent>
     <DialogActions>
       <Button onClick={handleClose}>Cancel</Button>
-      <Button color='primary'  onClick={handleUpload}>
-        Upload
+      <Button color='primary'  onClick={handleUpload}  disabled={loading}>
+        {loading ? 'Uploading...' : 'Upload'}
       </Button>
     </DialogActions>
   </Dialog>
